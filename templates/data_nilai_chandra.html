@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Nilai Siswa (Chandra)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        h2 {
+            margin-bottom: 20px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+        .tambah-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #48ff00, #63ca27);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .tambah-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
+        }
+        form select, form button {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            outline: none;
+            background: white;
+        }
+        form button {
+            background: #8f8f8f;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        form button:hover {
+            background: #ff6600;
+        }
+        .table-wrapper {
+            margin-top: 20px;
+            overflow-x: auto;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #929292;
+            color: white;
+            padding: 14px;
+            font-size: 14px;
+            text-align: left;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+        td a {
+            margin: 2px;
+            display: inline-block;
+        }
+        #tambah-toggle {
+            display: none;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #tambah-toggle:checked ~ .modal {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            width: 700px;
+            max-width: 95%;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+            animation: zoom 0.3s ease;
+        }
+        @keyframes zoom {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 15px;
+        }
+        .form-grid .full {
+            grid-column: span 2;
+        }
+        label {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+            display: block;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            outline: none;
+            transition: 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #ff5100;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.2);
+        }
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-group button {
+            background: #9c9c9c;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-group button:hover {
+            background: #ff6600;
+        }
+
+        .btn-group label {
+            background: #e5e7eb;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Data Nilai Siswa</h2>
+    <label for="tambah-toggle" class="tambah-btn">+ Tambah Data</label>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="margin: 10px 0;">
+            {% for category, message in messages %}
+                <div style="
+                padding: 10px;
+                border-radius: 5px;
+                color: white;
+                margin-bottom: 5px;
+                background-color: {% if category == 'error' %}#dc2626{% else %}#16a34a{% endif %};">
+                {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+        {% endwith %}
+        <div style="display: flex; flex-direction: row; gap: 10px;">
+            <form method="GET" class="mb-3" style="display:flex; gap:10px;  flex-direction: row;">
+            <select name="tahun">
+                <option value="">Semua Tahun</option>
+                {% for t in daftar_tahun_chandra %}
+                    <option value="{{ t.tahun_ajaran_chandra }}"
+                        {% if tahun == t.tahun_ajaran_chandra %}selected{% endif %}>
+                        {{ t.tahun_ajaran_chandra }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="semester">
+                <option value="">Semua Semester</option>
+                {% for s in [1,2,3,4,5,6] %}
+                    <option value="{{ s }}"
+                        {% if semester == s|string %}selected{% endif %}>
+                        Semester {{ s }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="kelas">
+                <option value="">Semua kelas</option>
+                {% for s in daftar_kelas_chandra %}
+                    <option value="{{ s.id_kelas_chandra }}"
+                        {% if kelas == s.id_kelas_chandra %}selected{% endif %}>
+                        {{ loop.index }} - {{ s.nama_kelas_chandra }}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit">Filter</button>
+        </form>
+        <a href="{{ url_for(
+            'cetak_rapor_chandra',
+            kelas=request.args.get('kelas'),
+            semester=request.args.get('semester'),
+            tahun=request.args.get('tahun')
+        ) }}"
+
+        target="_blank"
+         style="background:#16a34a;color:white;padding:6px 10px;border-radius:6px;text-decoration:none;">
+        🖨 Cetak Rapor
+        </a>
+                    
+        </div>
+       
+
+    <div class="table-wrapper">
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>NIS</th>
+                <th>Nama </th>
+                <th>Nama Mapel</th>
+                <th>Nilai TUGAS</th>
+                <th>Nilai UTS</th>
+                <th>Nilai UAS</th>
+                <th>Nilai Akhir</th>
+                <th>Deskripsi </th>
+                <th> Semester</th>
+                <th> Tahun Ajaran</th>
+                <th>Aksi</th>
+            </tr>
+            {% if siswa %}
+                {% for s in siswa %}
+                <tr>
+                    <td data-label="ID">{{s.id_nilai_chandra}}</td>
+                    <td data-label="NIS">{{ s.NIS_CHANDRA }}</td>
+                    <td data-label="Nama">{{ s.nama_chandra }}</td>
+                    <td data-label="Mapel">{{ s.nama_mapel_chandra }}</td>
+                    <td data-label="Tugas">{{ s.nilai_tugas_chandra }}</td>
+                    <td data-label="UTS">{{ s.nilai_uts_chandra }}</td>
+                    <td data-label="UAS">{{ s.nilai_uas_chandra }}</td>
+                    <td data-label="Nilai Akhir">{{ "{:,.2f}".format(s.nilai_akhir) }}</td>
+                    <td data-label="Deskripsi">{{ s.deskripsi_chandra }}</td>
+                    <td data-label="Semester">{{ s.semester_chandra }}</td>
+                    <td data-label="Tahun Ajaran">{{ s.tahun_ajaran_chandra }}</td>
+                    <td data-label="Aksi">
+                    <a href="{{ url_for(
+                        'edit_nilai_chandra',
+                        nis=s.NIS_CHANDRA,
+                        mapel=s.nama_mapel_chandra,
+                        semester=s.semester_chandra,
+                        tahun=s.tahun_ajaran_chandra
+                    ) }}"
+                    style="background:#2563eb;color:white;padding:6px 10px;border-radius:6px;text-decoration:none;">
+                        Edit
+                    </a>
+
+                        
+
+                            <a href="{{ url_for(
+                            'hapus_nilai_chandra',
+                            nis=s.NIS_CHANDRA,
+                            mapel=s.nama_mapel_chandra,
+                            semester=s.semester_chandra,
+                            tahun=s.tahun_ajaran_chandra
+                        ) }}"
+                        onclick="return confirm('Yakin ingin menghapus data ini?')"
+                        style="background:#dc2626;color:white;padding:6px 10px;border-radius:6px;text-decoration:none;">
+                            Hapus
+                        </a>
+                            
+                     
+
+
+                </tr>
+            
+                {% endfor %}
+                
+
+            {% endif %}
+        </table>
+    </div>
+
+       
+    <input type="checkbox" id="tambah-toggle">
+
+    <div class="modal">
+        <div class="modal-content">
+            <h3>Tambah Data Nilai</h3>
+           <form method="POST" action="/proses_nilai">
+
+        <div class="form-grid">
+
+            <div>
+                <label>NIS</label>
+                <select name="ChandraNis" required>
+                    <option value="" disabled selected>-- Pilih NIS --</option>
+                    {% for s in daftar_siswa_chandra %}
+                        <option value="{{ s.NIS_CHANDRA }}">{{ s.NIS_CHANDRA }} - {{ s.nama_chandra }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Nama Mapel</label>
+                <select name="ChandraMapel" required>
+                    <option value="" disabled selected>-- Pilih Mapel --</option>
+                    {% for s in daftar_mapel_chandra %}
+                        <option value="{{ s.id_mapel_chandra }}">{{ loop.index }} - {{ s.nama_mapel_chandra }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Nilai Tugas</label>
+                <input type="number" name="ChandraTugas" required>
+            </div>
+
+
+            <div>
+                <label>Nilai UTS</label>
+                <input type="number" name="ChandraUTS" required>
+            </div>
+
+            <div>
+                <label>Nilai UAS</label>
+                <input type="number" name="ChandraUAS" required>
+            </div>       
+            <div>
+                <label>Semester</label>
+                <select name="ChandraS" id="" required>
+                    <option value="">--Pilih Semester--</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
+            </div>
+            <div class="full">
+                <label style="text-align: center;">Tahun Ajaran</label>
+                <select name="ChandraAjaran" id="" required>
+                    <option value="">--Pilih Tahun--</option>
+                    <option value="2024-2025">2024-2025</option>
+                    <option value="2025-2026">2025-2026</option>
+                    <option value="2026-2027">2026-2027</option>
+                    <option value="2027-2028">2027-2028</option>
+                    <option value="2028-2029">2028-2029</option>
+                </select>
+            </div>
+            
+
+
+        </div>
+
+    <div class="btn-group">
+        <button type="submit">Simpan</button>
+        <label for="tambah-toggle">Batal</label>
+    </div>
+
+    </form>
+
+        </div>
+    </div> 
+
+{% if nilai_edit %}
+<div class="modal" style="display:flex;">
+    <div class="modal-content">
+        <h3>Edit Data Nilai</h3>
+
+        <form method="POST" action="{{ url_for('update_nilai_chandra') }}">
+            <input type="hidden" name="ChandraNis" value="{{ nilai_edit.NIS_CHNADRA }}">
+            <input type="hidden" name="MapelLamaChandra" value="{{ nilai_edit.id_mapel_chandra }}">
+            <input type="hidden" name="SemesterLamaChandra" value="{{ nilai_edit.semester_chandra }}">
+            <input type="hidden" name="AjaranLamaChandra" value="{{ nilai_edit.tahun_ajaran_chandra }}">
+
+            
+            <div class="form-grid">
+                <div>
+                    <label>NIS</label>
+                    <input type="text" value="{{ nilai_edit.NIS_CHANDRA }}" readonly>
+                    <input type="hidden" name="ChandraNis" value="{{ nilai_edit.NIS_CHANDRA }}">
+                </div>
+
+                <div>
+                    <label>Mata Pelajaran</label>
+                    <select name="ChandraMapel" required>
+                        {% for m in daftar_mapel_chandra %}
+                            <option value="{{ m.id_mapel_chandra }}"
+                                {% if m.id_mapel_chandra == nilai_edit.id_mapel_chandra %}selected{% endif %}>
+                                {{ m.nama_mapel_chandra }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Nilai Tugas</label>
+                    <input type="number" name="ChandraTugas" value="{{ nilai_edit.nilai_tugas_chandra }}" required>
+                </div>
+
+                <div>
+                    <label>Nilai UTS</label>
+                    <input type="number" name="ChandraUTS" value="{{ nilai_edit.nilai_uts_chandra }}" required>
+                </div>
+
+                <div>
+                    <label>Nilai UAS</label>
+                    <input type="number" name="ChandraUAS" value="{{ nilai_edit.nilai_uas_chandra }}" required>
+                </div>
+
+
+                <div>
+                    <label>Semester</label>
+                    <input type="text" name="ChandraS" value="{{ nilai_edit.semester_chandra }}" required>
+                </div>
+
+                <div class="full">
+                    <label style="text-align: center;">Tahun Ajaran</label>
+                    <input type="text" name="ChandraAjaran" value="{{ nilai_edit.tahun_ajaran_chandra }}" required>
+                </div>
+
+                
+
+            </div>
+
+            <div class="btn-group">
+                <button type="submit">Update</button>
+                <a href="{{ url_for('data_nilai_chandra') }}"
+                   style="background:#ccc;color:#333;padding:8px 16px;border-radius:8px;text-decoration:none;">
+                   Batal
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+</body>
+</html>
